@@ -126,5 +126,13 @@ Reproduction steps, impact, and workarounds are in
 - Bug report: `evidence/BUGS.md`
 - Masked credit-claim proof: `evidence/terminal3-claim-success.png`
 - Public deployment proof: `evidence/terminal3-deployment-receipt.png`
+- Superteam receipt: `evidence/superteam-submission-received.png`
 - Public Google report:
   `https://docs.google.com/document/d/1f2UsCysjQtF40r3PhdtSCP_OLTqS_bXZHVtjCjTsdCI/edit?usp=sharing`
+
+## Submission status
+
+Submitted successfully to the Superteam listing on 2026-08-07 while the live
+listing showed zero prior submissions and all six paid placements available.
+The platform confirmation screenshot is
+[`superteam-submission-received.png`](superteam-submission-received.png).

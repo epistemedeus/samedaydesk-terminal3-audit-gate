@@ -3,6 +3,7 @@
 [Public completion report](https://docs.google.com/document/d/1f2UsCysjQtF40r3PhdtSCP_OLTqS_bXZHVtjCjTsdCI/edit?usp=sharing)
 | [Live deployment receipt](evidence/deployment.json)
 | [Walkthrough findings](evidence/BUGS.md)
+| [Superteam submission receipt](evidence/superteam-submission-received.png)
 
 A small Rust WASM contract for the Terminal 3 T3N sandbox. It turns a private
 AI search audit intake into a deterministic, public-safe action plan.
