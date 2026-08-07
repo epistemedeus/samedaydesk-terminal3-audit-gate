@@ -19,6 +19,8 @@ and evidence are original.
   any screenshot, log, commit, or report.
 - Masked claim-success screenshot:
   [`terminal3-claim-success.png`](terminal3-claim-success.png)
+- Public deployment-receipt screenshot:
+  [`terminal3-deployment-receipt.png`](terminal3-deployment-receipt.png)
 
 ## Contract deployment
 
@@ -123,3 +125,6 @@ Reproduction steps, impact, and workarounds are in
 - Verification record: `evidence/TEST-RESULTS.md`
 - Bug report: `evidence/BUGS.md`
 - Masked credit-claim proof: `evidence/terminal3-claim-success.png`
+- Public deployment proof: `evidence/terminal3-deployment-receipt.png`
+- Public Google report:
+  `https://docs.google.com/document/d/1f2UsCysjQtF40r3PhdtSCP_OLTqS_bXZHVtjCjTsdCI/edit?usp=sharing`

@@ -1,5 +1,9 @@
 # SameDayDesk Audit Gate on Terminal 3
 
+[Public completion report](https://docs.google.com/document/d/1f2UsCysjQtF40r3PhdtSCP_OLTqS_bXZHVtjCjTsdCI/edit?usp=sharing)
+| [Live deployment receipt](evidence/deployment.json)
+| [Walkthrough findings](evidence/BUGS.md)
+
 A small Rust WASM contract for the Terminal 3 T3N sandbox. It turns a private
 AI search audit intake into a deterministic, public-safe action plan.
 
@@ -146,6 +150,7 @@ The repository carries the following proof:
 - one real `plan-audit` invocation with synthetic private fields
 - a leak check showing those private fields do not appear in the response
 - documented bugs or documentation gaps found during the walkthrough
+- two secret-safe screenshots covering the credit claim and live receipt
 
 ## Origin
 
