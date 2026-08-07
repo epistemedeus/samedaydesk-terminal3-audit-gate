@@ -1,47 +1,18 @@
-//! z-tenant-flight v0.4.0 — Duffel flight booking showcase.
+//! SameDayDesk Audit Gate for the Terminal 3 T3N sandbox.
 //!
-//! Demonstrates the z-space tenant model:
-//!   - `search-offers`: calls Duffel offer search API inside the Enclave (no PII).
-//!   - `book-offer`: calls Duffel create-order API via the host's
-//!     `http-with-placeholders` interface. Passenger PII is NEVER passed in as
-//!     a contract argument: the contract templates `{{profile.<field>}}`
-//!     markers into the order body and the host resolves them from the calling
-//!     user's profile at dispatch time, so plaintext PII never enters WASM.
-//!
-//! The Duffel API key is read from the z: KV map `secrets` (key:
-//! `duffel_api_key`). This map is created and populated by the tenant SDK
-//! before the contract runs. Only the booking ID and PNR cross the WIT
-//! boundary back to the caller.
-//!
-//! # Host-capability requirements
-//!
-//! Declare in manifest (access to a user's profile is gated by the on-chain
-//! agent delegation grant, not a per-field allowlist):
-//! ```json
-//! {
-//!   "host_capabilities": [
-//!     "kv_store", "logging", "tenant_context", "http", "http_with_placeholders"
-//!   ]
-//! }
-//! ```
-//!
-//! # Setup
-//!
-//! Before first use, the tenant SDK must create the `secrets` KV map and
-//! write the Duffel API key:
-//! ```text
-//! // Via the tenant SDK (before contract first use):
-//! z_sdk.kv("secrets").set("duffel_api_key", "duffel_test_your_key_here")
-//! ```
+//! The contract turns a private AI search audit intake into a deterministic,
+//! public-safe action plan. It declares no Terminal 3 custom host interfaces,
+//! network egress, or durable storage. Sensitive intake fields are parsed
+//! inside the TEE contract and are never copied into the response.
 #![warn(clippy::style, missing_debug_implementations)]
 #![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 
 extern crate alloc;
 
-pub const CONTRACT_VERSION: &str = "0.4.1";
+pub const CONTRACT_VERSION: &str = "0.1.0";
 
 wit_bindgen::generate!({
-    world: "tenant-flight",
+    world: "samedaydesk-audit",
     path: "wit",
     additional_derives: [
         serde::Deserialize,
@@ -50,25 +21,17 @@ wit_bindgen::generate!({
     generate_all,
 });
 
-mod booking;
-mod search;
+mod audit;
 
 struct Component;
 
 #[cfg(target_arch = "wasm32")]
-impl exports::z::tenant_flight::contracts::Guest for Component {
-    fn search_offers(
-        req: exports::z::tenant_flight::contracts::GenericInput,
+impl exports::z::samedaydesk_audit::contracts::Guest for Component {
+    fn plan_audit(
+        req: exports::z::samedaydesk_audit::contracts::GenericInput,
     ) -> Result<alloc::vec::Vec<u8>, alloc::string::String> {
-        let input = req.input.ok_or("search-offers: missing input")?;
-        search::search_offers(&input)
-    }
-
-    fn book_offer(
-        req: exports::z::tenant_flight::contracts::GenericInput,
-    ) -> Result<alloc::vec::Vec<u8>, alloc::string::String> {
-        let input = req.input.ok_or("book-offer: missing input")?;
-        booking::book_offer(&input)
+        let input = req.input.ok_or("plan-audit: missing input")?;
+        audit::plan_audit(&input)
     }
 }
 
@@ -89,7 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn contract_version_is_v0_4_0() {
-        assert_eq!(CONTRACT_VERSION, "0.4.1");
+    fn contract_version_matches_package() {
+        assert_eq!(CONTRACT_VERSION, env!("CARGO_PKG_VERSION"));
     }
 }

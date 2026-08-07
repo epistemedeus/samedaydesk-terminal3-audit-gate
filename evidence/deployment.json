@@ -1,0 +1,31 @@
+{
+  "captured_at_utc": "2026-08-07T16:55:36Z",
+  "environment": "testnet",
+  "claimed_test_credits": 20000,
+  "tenant_did": "did:t3n:9f5a67812cda76ea1601afb2b595d22fd4ccf142",
+  "contract_id": 484,
+  "script_name": "z:9f5a67812cda76ea1601afb2b595d22fd4ccf142:sdd-audit",
+  "registered_version": "0.1.0",
+  "resolved_script_version": "0.1.0",
+  "wasm_bytes": 149166,
+  "wasm_sha256": "4f53e7bdc04fa4307c8e17d8faefe7d4363026058252c02c3ad5d4c898638918",
+  "trust_mode": "explicit testnet-only opt-out; signed manifest unavailable",
+  "invocation": {
+    "public_id": "terminal3-demo-001",
+    "readiness_score": 48,
+    "readiness_tier": "weak",
+    "priority_actions": [
+      "Publish Organization JSON-LD with a stable legal and brand identity",
+      "Connect named experts, credentials, and reviewed services in structured data",
+      "Reconcile location names, addresses, and phone data across owned profiles",
+      "Add verifiable third-party authority evidence and cite its original source",
+      "Add concise answer-shaped FAQs with matching visible page content",
+      "Publish a small llms.txt index after the primary entity gaps are fixed"
+    ],
+    "private_fields_withheld": 4,
+    "policy_version": "0.1.0"
+  },
+  "leak_check": "passed: all four synthetic private values were absent from the decoded response",
+  "sdk_balance_read": null,
+  "sdk_balance_note": "SDK 4.30.0 and the live testnet disagree on token.get-usage parameter encoding; see BUGS.md"
+}

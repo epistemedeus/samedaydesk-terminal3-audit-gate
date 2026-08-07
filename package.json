@@ -1,0 +1,12 @@
+{
+  "name": "samedaydesk-terminal3-audit-gate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy:testnet": "node scripts/deploy.mjs"
+  },
+  "dependencies": {
+    "@terminal3/t3n-sdk": "4.30.0"
+  }
+}

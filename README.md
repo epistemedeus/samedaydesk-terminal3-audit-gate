@@ -1,133 +1,156 @@
-# z-tenant-flight
+# SameDayDesk Audit Gate on Terminal 3
 
-Duffel flight booking showcase for Trinity z-namespace tenants — v0.3.0.
+A small Rust WASM contract for the Terminal 3 T3N sandbox. It turns a private
+AI search audit intake into a deterministic, public-safe action plan.
 
-A Rust WASM contract that runs inside the Trinity TEE (Trusted Execution Environment) and calls the [Duffel](https://duffel.com) API synchronously via `host:interfaces/http`.
+This is a real SameDayDesk use case, not a renamed sample. A sales or delivery
+agent may know a prospect's private domain, contact email, budget, and internal
+notes. The contract scores the technical signals inside the TEE and returns
+only an opaque lead id, readiness score, readiness tier, and prioritized fixes.
 
-## What this is
+## Privacy boundary
 
-Two contract functions exposed over WIT:
+The `plan-audit` function accepts JSON with four private fields:
 
-| Function | What it does |
-|---|---|
-| `search-offers` | POST to Duffel `/air/offer-requests`, then GET `/air/offers` — returns a list of available flights |
-| `book-offer` | POST to Duffel `/air/orders` with full passenger PII — returns the booking ID and PNR |
+- `business_domain`
+- `contact_email`
+- `internal_notes`
+- `monthly_budget_cents`
 
-Privacy guarantee: passenger PII (passport number, date-of-birth, full name, email, phone) is passed in by the agent and used inside the enclave to call Duffel. Only the booking ID and PNR cross the WIT boundary back to the caller. Error responses from Duffel are logged inside the TEE and never forwarded to the caller.
+The response never contains any of them. The contract WIT declares no Terminal
+3 HTTP, socket, storage, logging, or other custom host capability, so the
+business logic has no network or durable-storage egress path. The compiled
+component retains the Rust toolchain's standard WASI CLI adapter imports, which
+`wasm-tools component wit` makes visible; the contract code does not call them.
+The response includes `private_fields_withheld: 4` as an explicit policy result.
 
-## Host-capability manifest
+```mermaid
+flowchart LR
+    A[Private prospect intake] --> B[Terminal 3 TEE]
+    B --> C[Strict input validation]
+    C --> D[Deterministic readiness policy]
+    D --> E[Opaque id, score, tier, actions]
+```
 
-Declare in your contract manifest:
+## Contract interface
+
+```wit
+plan-audit: func(req: generic-input) -> result<list<u8>, string>;
+```
+
+Example input:
 
 ```json
-{ "host_capabilities": ["kv_store", "logging", "tenant_context", "http"] }
+{
+  "public_id": "lead-001",
+  "business_domain": "private-prospect.example",
+  "contact_email": "owner@private-prospect.example",
+  "internal_notes": "Confidential expansion goal",
+  "monthly_budget_cents": 75000,
+  "signals": {
+    "has_organization_schema": false,
+    "has_local_business_schema": true,
+    "has_person_authority_schema": false,
+    "has_faq_schema": false,
+    "has_llms_txt": false,
+    "has_indexable_service_pages": true,
+    "authority_evidence_count": 2,
+    "location_consistency_pct": 70
+  }
+}
 ```
 
-The `http` capability enables outbound HTTP via the `tenant-http` linker world.
+Example output:
 
-## Setup: providing the Duffel API key
-
-Before deploying or calling this contract for the first time, the tenant SDK must:
-
-1. Create the `secrets` KV map in the z: namespace.
-2. Write the Duffel API key under the key `duffel_api_key`.
-
-```bash
-# Example via the tenant SDK / admin tooling:
-z_sdk.kv("secrets").set("duffel_api_key", "<your Duffel test API token>")
+```json
+{
+  "public_id": "lead-001",
+  "readiness_score": 48,
+  "readiness_tier": "weak",
+  "priority_actions": [
+    "Publish Organization JSON-LD with a stable legal and brand identity",
+    "Connect named experts, credentials, and reviewed services in structured data"
+  ],
+  "private_fields_withheld": 4,
+  "policy_version": "0.1.0"
+}
 ```
 
-The contract reads this value at runtime using `host:interfaces/kv-store` — no `secret` interface is involved. The `secrets` map is owned and populated externally by the tenant operator; the contract never writes to it.
+The exact action list depends on every missing signal; the shortened example
+above shows the response shape.
 
-## Building
+## Build and test
 
 ```bash
+cargo fmt --check
+cargo test --lib
+cargo clippy --all-targets -- -D warnings
 rustup target add wasm32-wasip2
 cargo build --target wasm32-wasip2 --release
 ```
 
-The WASM artefact will be at `target/wasm32-wasip2/release/z_tenant_flight.wasm`.
+The component is written to:
 
-## Running tests (native)
+```text
+target/wasm32-wasip2/release/samedaydesk_audit_gate.wasm
+```
+
+Verify the exported interface with:
 
 ```bash
-cargo test --lib
-cargo clippy --all-targets -- -D warnings
+wasm-tools component wit target/wasm32-wasip2/release/samedaydesk_audit_gate.wasm
 ```
 
-## Contract functions
+## Terminal 3 sandbox deployment
 
-### `search-offers`
+Complete the official Terminal 3 quickstart first. Keep the returned API key
+outside this repository and set `T3N_API_KEY` only in the local environment.
 
-```wit
-search-offers: func(req: search-offers-req) -> result<search-offers-resp, string>;
+Install the pinned SDK dependency, build the component, and deploy:
+
+```bash
+npm install
+cargo build --target wasm32-wasip2 --release
+T3N_API_KEY=0x... T3N_ALLOW_UNSAFE_TRUST=1 npm run deploy:testnet
 ```
 
-Input:
+The deploy script first requests the SDK's signed testnet trust manifest. At
+the time of this deployment that official endpoint returned HTTP 405, so the
+script refuses to proceed unless `T3N_ALLOW_UNSAFE_TRUST=1` explicitly permits
+the SDK's testnet-only `{ unsafe_trust_server: true }` path. Never use that
+opt-out for production. See [`evidence/BUGS.md`](evidence/BUGS.md).
 
-```json
-{
-  "origin": "LHR",
-  "destination": "JFK",
-  "departure_date": "2026-07-15",
-  "cabin_class": "economy",
-  "adult_count": 1
-}
+Contract versions are immutable. On the same account, change
+`contractVersion` in `scripts/deploy.mjs` and the matching Cargo/WIT policy
+version before registering a revised build.
+
+Use a short stable contract tail:
+
+```text
+sdd-audit
 ```
 
-Returns a list of `offer` records, each with `id`, `total_amount`, `total_currency`, and `expires_at`.
+Register version `0.1.0` with the official `TenantClient` flow and this WASM
+path. Save the returned `contract_id`, canonical script name, and invocation
+output for the public completion report. Never commit the one-time API key.
 
-### `book-offer`
+## Reproducible evidence
 
-```wit
-book-offer: func(req: book-offer-req) -> result<booking, string>;
-```
+The repository carries the following proof:
 
-Input:
+- a pinned public commit
+- native test and Clippy output
+- a successful `wasm32-wasip2` build
+- the component's exported WIT
+- the Terminal 3 DID and contract registration id
+- one real `plan-audit` invocation with synthetic private fields
+- a leak check showing those private fields do not appear in the response
+- documented bugs or documentation gaps found during the walkthrough
 
-```json
-{
-  "offer_id": "off_abc123",
-  "passengers": [
-    {
-      "given_name": "Jane",
-      "family_name": "Smith",
-      "date_of_birth": "1990-01-15",
-      "passport_number": "AB1234567",
-      "nationality": "GB",
-      "passport_expiry": "2030-06-01",
-      "gender": "f",
-      "email": "jane@example.com",
-      "phone": "+441234567890"
-    }
-  ],
-  "total_amount": "199.00",
-  "total_currency": "GBP"
-}
-```
+## Origin
 
-Returns `{ "id": "ord_...", "pnr": "ABC123", "status": "confirmed" }`.
-
-## Architecture
-
-```mermaid
-sequenceDiagram
-    participant Agent as agent
-    participant T3Network as T3 Network<br/>(z-namespace contract)
-    participant Duffel
-
-    Agent->>T3Network: search-offers(origin, dest, ...)
-    T3Network->>Duffel: POST /air/offer-requests
-    Duffel-->>T3Network: { offer_request_id }
-    T3Network->>Duffel: GET /air/offers?id=...
-    Duffel-->>T3Network: [ offer, offer, ... ]
-    T3Network-->>Agent: { offers: [...] }
-
-    Agent->>T3Network: book-offer(offer_id, passengers)
-    Note over Agent,T3Network: PII enters T3 Network here
-    T3Network->>Duffel: POST /air/orders
-    Duffel-->>T3Network: { id, pnr, status }
-    Note over Agent,T3Network: PII never returned
-    T3Network-->>Agent: { id, pnr, status }
-```
-
+This repository is a fork of Terminal 3's official
+[`z-tenant-flight`](https://github.com/Terminal-3/z-tenant-flight) reference,
+as directed by their contract walkthrough. The implementation and use case in
+this branch are original SameDayDesk work. Upstream remains configured for
+comparison and attribution.
