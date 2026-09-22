@@ -104,7 +104,11 @@ Verify the exported interface with:
 
 ```bash
 wasm-tools component wit target/wasm32-wasip2/release/samedaydesk_audit_gate.wasm
+scripts/check-component-imports.sh
 ```
+
+`scripts/check-component-imports.sh` accepts only WASI adapter imports plus
+the `plan-audit` export. It rejects `ap2/mandate` and every `host:*` package.
 
 ## Terminal 3 sandbox deployment
 
@@ -128,6 +132,12 @@ opt-out for production. See [`evidence/BUGS.md`](evidence/BUGS.md).
 Contract versions are immutable. On the same account, change
 `contractVersion` in `scripts/deploy.mjs` and the matching Cargo/WIT policy
 version before registering a revised build.
+
+The 2026-09-17 host notice does not require that for this contract. It
+imports no Terminal 3 host interface, including the removed `ap2/mandate`
+interface and `host:tenant/tenant-context`. Keep version `0.1.0` on the
+existing contract id `484`. See
+[`evidence/COMPATIBILITY-20260922.md`](evidence/COMPATIBILITY-20260922.md).
 
 Use a short stable contract tail:
 
